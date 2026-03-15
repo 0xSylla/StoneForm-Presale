@@ -13,13 +13,7 @@ interface AggregatorV3Interface {
     function latestRoundData()
         external
         view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        );
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 }
 
 /// @title StoneForm ICO V2 (Secure)
@@ -50,29 +44,17 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
     mapping(uint256 => TokenDetail) public paymentTokens;
 
     /* ───────────── EVENTS ───────────── */
-    event TokensPurchased(
-        address indexed buyer,
-        address indexed recipient,
-        uint256 amount
-    );
+    event TokensPurchased(address indexed buyer, address indexed recipient, uint256 amount);
     event TokenPerUSDUpdated(uint256 newPrice);
     event PaymentTokenUpdated(uint256 indexed id);
     event SaleTokenUpdated(address token);
-    event AdminTransferStarted(
-        address indexed oldAdmin,
-        address indexed newAdmin
-    );
+    event AdminTransferStarted(address indexed oldAdmin, address indexed newAdmin);
     event AdminTransferCompleted(address indexed newAdmin);
     event SignerUpdated(address indexed signer);
     event EmergencyWithdraw(address indexed token, uint256 amount);
 
     /* ───────────── CONSTRUCTOR ───────────── */
-    constructor(
-        address multisigAdmin,
-        address signer,
-        IERC20 _saleToken,
-        uint256 _tokenPerUSD
-    ) {
+    constructor(address multisigAdmin, address signer, IERC20 _saleToken, uint256 _tokenPerUSD) {
         require(multisigAdmin != address(0), "Invalid admin");
         require(signer != address(0), "Invalid signer");
 
@@ -87,9 +69,7 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
     /* ───────────── ADMIN SECURITY ───────────── */
 
     /// 2-step admin rotation (SAFE)
-    function initiateAdminTransfer(
-        address newAdmin
-    ) external onlyRole(ADMIN_ROLE) {
+    function initiateAdminTransfer(address newAdmin) external onlyRole(ADMIN_ROLE) {
         require(newAdmin != address(0), "Zero address");
         pendingAdmin = newAdmin;
         emit AdminTransferStarted(msg.sender, newAdmin);
@@ -129,9 +109,7 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
         emit TokenPerUSDUpdated(newPrice);
     }
 
-    function updateSaleToken(
-        address newSaleToken
-    ) external onlyRole(ADMIN_ROLE) {
+    function updateSaleToken(address newSaleToken) external onlyRole(ADMIN_ROLE) {
         require(newSaleToken != address(0), "Zero address");
         saleToken = IERC20(newSaleToken);
         emit SaleTokenUpdated(newSaleToken);
@@ -156,12 +134,12 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
         uint256 nonce;
     }
 
-    function buy(
-        address recipient,
-        uint256 paymentType,
-        uint256 amountPaid,
-        Sign calldata sig
-    ) external payable nonReentrant whenNotPaused {
+    function buy(address recipient, uint256 paymentType, uint256 amountPaid, Sign calldata sig)
+        external
+        payable
+        nonReentrant
+        whenNotPaused
+    {
         require(!usedNonce[sig.nonce], "Nonce used");
         usedNonce[sig.nonce] = true;
 
@@ -175,11 +153,7 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
         if (t.token == address(0)) {
             require(msg.value == amountPaid, "Invalid BNB");
         } else {
-            IERC20(t.token).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountPaid
-            );
+            IERC20(t.token).safeTransferFrom(msg.sender, address(this), amountPaid);
         }
 
         saleToken.safeTransfer(recipient, tokenAmount);
@@ -188,12 +162,8 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
 
     /* ───────────── INTERNAL ───────────── */
 
-    function _calculateTokens(
-        uint256 id,
-        uint256 paid
-    ) internal view returns (uint256) {
-        (, int256 price, , , ) = AggregatorV3Interface(paymentTokens[id].oracle)
-            .latestRoundData();
+    function _calculateTokens(uint256 id, uint256 paid) internal view returns (uint256) {
+        (, int256 price,,,) = AggregatorV3Interface(paymentTokens[id].oracle).latestRoundData();
 
         // Chainlink price is usually 8 decimals. tokenPerUSD is 18 decimals.
         // paid is in token decimals.
@@ -201,16 +171,11 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
         return (usdValue * paid) / (10 ** paymentTokens[id].decimals);
     }
 
-    function _verifySig(
-        uint256 asset,
-        address recipient,
-        address caller,
-        uint256 amount,
-        Sign calldata sig
-    ) internal view {
-        bytes32 hash = keccak256(
-            abi.encodePacked(asset, recipient, caller, amount, sig.nonce)
-        );
+    function _verifySig(uint256 asset, address recipient, address caller, uint256 amount, Sign calldata sig)
+        internal
+        view
+    {
+        bytes32 hash = keccak256(abi.encodePacked(asset, recipient, caller, amount, sig.nonce));
 
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(hash);
         address recovered = ethSignedHash.recover(sig.v, sig.r, sig.s);
@@ -220,11 +185,7 @@ contract StoneForm_ICO_V2 is AccessControl, ReentrancyGuard, Pausable {
 
     /* ───────────── EMERGENCY ───────────── */
 
-    function emergencyWithdraw(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyRole(ADMIN_ROLE) {
+    function emergencyWithdraw(address token, address to, uint256 amount) external onlyRole(ADMIN_ROLE) {
         require(to != address(0), "Zero address");
         if (token == address(0)) {
             payable(to).transfer(amount);

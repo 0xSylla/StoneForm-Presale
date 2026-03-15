@@ -37,9 +37,7 @@ contract StoneFormPresaleAdvancedTest is Test {
         StoneFormPresaleAdvanced.Tier[] memory tiers = _buildTiers();
 
         // Deploy presale
-        presale = new StoneFormPresaleAdvanced(
-            admin, signer, address(mockSablier), tiers, MIN_PURCHASE, MAX_PURCHASE
-        );
+        presale = new StoneFormPresaleAdvanced(admin, signer, address(mockSablier), tiers, MIN_PURCHASE, MAX_PURCHASE);
 
         // Deploy token minted to presale
         token = new StoneFormToken(address(presale));
@@ -85,12 +83,11 @@ contract StoneFormPresaleAdvancedTest is Test {
         });
     }
 
-    function _createSignature(
-        address caller,
-        uint256 amount,
-        string memory paymentToken,
-        uint256 nonce
-    ) internal view returns (StoneFormPresaleAdvanced.Sign memory) {
+    function _createSignature(address caller, uint256 amount, string memory paymentToken, uint256 nonce)
+        internal
+        view
+        returns (StoneFormPresaleAdvanced.Sign memory)
+    {
         bytes32 hash = keccak256(abi.encodePacked(caller, amount, paymentToken, nonce));
         bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPrivateKey, ethSignedHash);
@@ -111,7 +108,7 @@ contract StoneFormPresaleAdvancedTest is Test {
     }
 
     function testConstructorSetsTiers() public view {
-        (uint256 price,,uint256 maxCap,,) = presale.tiers(0);
+        (uint256 price,, uint256 maxCap,,) = presale.tiers(0);
         assertEq(price, 1e16);
         assertEq(maxCap, 50_000 ether);
     }
@@ -335,9 +332,8 @@ contract StoneFormPresaleAdvancedTest is Test {
     function testFinalizeRevertsWithoutPresaleToken() public {
         // Deploy new presale without setting presale token
         StoneFormPresaleAdvanced.Tier[] memory tiers = _buildTiers();
-        StoneFormPresaleAdvanced freshPresale = new StoneFormPresaleAdvanced(
-            admin, signer, address(mockSablier), tiers, MIN_PURCHASE, MAX_PURCHASE
-        );
+        StoneFormPresaleAdvanced freshPresale =
+            new StoneFormPresaleAdvanced(admin, signer, address(mockSablier), tiers, MIN_PURCHASE, MAX_PURCHASE);
 
         vm.prank(admin);
         vm.expectRevert(StoneFormPresaleAdvanced.StoneFormPresale__PresaleTokenNotSet.selector);

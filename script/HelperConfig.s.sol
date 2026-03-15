@@ -130,4 +130,5 @@ contract HelperConfig is CodeConstants, Script {
 /// @dev Minimal placeholder so HelperConfig can deploy a non-zero Sablier address on Anvil.
 contract MockSablierPlaceholder {
     // Intentionally empty — tests use a full-featured mock.
-}
+
+    }

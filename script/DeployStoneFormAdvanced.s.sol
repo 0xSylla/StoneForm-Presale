@@ -26,7 +26,7 @@ contract DeployStoneFormAdvanced is Script {
             config.signer,
             config.sablier,
             tiers,
-            1e18,           // minPurchase
+            1e18, // minPurchase
             10_000_000 ether // maxPurchase
         );
 

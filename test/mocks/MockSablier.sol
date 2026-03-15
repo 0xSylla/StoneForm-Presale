@@ -22,9 +22,7 @@ interface ISablierLockupLinear {
         address broker;
     }
 
-    function createWithDurations(
-        CreateWithDurations calldata params
-    ) external returns (uint256 streamId);
+    function createWithDurations(CreateWithDurations calldata params) external returns (uint256 streamId);
 }
 
 /// @title MockSablier
@@ -47,16 +45,10 @@ contract MockSablier is ISablierLockupLinear {
     mapping(uint256 => Stream) public streams;
 
     event StreamCreated(
-        uint256 indexed streamId,
-        address indexed sender,
-        address indexed recipient,
-        uint128 totalAmount,
-        address asset
+        uint256 indexed streamId, address indexed sender, address indexed recipient, uint128 totalAmount, address asset
     );
 
-    function createWithDurations(
-        CreateWithDurations calldata params
-    ) external override returns (uint256 streamId) {
+    function createWithDurations(CreateWithDurations calldata params) external override returns (uint256 streamId) {
         streamId = s_nextStreamId++;
 
         IERC20(params.asset).safeTransferFrom(params.sender, address(this), params.totalAmount);

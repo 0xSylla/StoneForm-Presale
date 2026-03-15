@@ -27,9 +27,7 @@ interface ISablierLockupLinear {
         address broker;
     }
 
-    function createWithDurations(
-        CreateWithDurations calldata params
-    ) external returns (uint256 streamId);
+    function createWithDurations(CreateWithDurations calldata params) external returns (uint256 streamId);
 }
 
 /*
@@ -205,10 +203,10 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
         presaleStatus = Status.OPEN;
     }
 
-    function addNewPaymentToken(
-        address[] memory _tokenAddresses,
-        string[] memory _symbols
-    ) external onlyRole(ADMIN_ROLE) {
+    function addNewPaymentToken(address[] memory _tokenAddresses, string[] memory _symbols)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
         if (_tokenAddresses.length != _symbols.length) revert StoneFormPresale__MismatchTokenAndSymbolArray();
         for (uint256 i = 0; i < _symbols.length; i++) {
             s_paymentTokens[_symbols[i]] = _tokenAddresses[i];
@@ -235,11 +233,12 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
 
     /* ───────────── PURCHASE LOGIC ───────────── */
 
-    function purchaseTokens(
-        uint256 _amount,
-        string memory _paymentToken,
-        Sign calldata sig
-    ) external nonReentrant whenNotPaused presaleActive {
+    function purchaseTokens(uint256 _amount, string memory _paymentToken, Sign calldata sig)
+        external
+        nonReentrant
+        whenNotPaused
+        presaleActive
+    {
         // Verify signature
         if (usedNonce[sig.nonce]) revert StoneFormPresale__NonceAlreadyUsed();
         usedNonce[sig.nonce] = true;
@@ -272,9 +271,8 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
 
             uint256 tokensFromCollateral = (remainingCollateral * 1e18) / tiers[tierIndex].tierPrice;
 
-            uint256 tokensInThisTier = tokensFromCollateral > currentTierAvailable
-                ? currentTierAvailable
-                : tokensFromCollateral;
+            uint256 tokensInThisTier =
+                tokensFromCollateral > currentTierAvailable ? currentTierAvailable : tokensFromCollateral;
 
             uint256 collateralForThisTier = (tokensInThisTier * tiers[tierIndex].tierPrice) / 1e18;
 
@@ -297,7 +295,9 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
         if (totalTokensToGive == 0) revert StoneFormPresale__NotEnoughTokensPurchased();
 
         if (contributions[msg.sender] + totalCollateralUsed > maxPurchase) {
-            revert StoneFormPresale__InvalidPurchaseAmount("Amount superior to maxPurchase", totalCollateralUsed, maxPurchase);
+            revert StoneFormPresale__InvalidPurchaseAmount(
+                "Amount superior to maxPurchase", totalCollateralUsed, maxPurchase
+            );
         }
 
         if (totalTokenSold + totalTokensToGive > hardCap) {
@@ -318,7 +318,9 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
     function finalizePresale(uint40 _tgeTimestamp) external onlyRole(ADMIN_ROLE) {
         if (presaleStatus == Status.FINALIZED) revert StoneFormPresale__PresaleFinalized();
         if (address(presaleToken) == address(0)) revert StoneFormPresale__PresaleTokenNotSet();
-        if (presaleToken.balanceOf(address(this)) < totalTokenSold) revert StoneFormPresale__InsufficientPresaleTokenBalance();
+        if (presaleToken.balanceOf(address(this)) < totalTokenSold) {
+            revert StoneFormPresale__InsufficientPresaleTokenBalance();
+        }
         if (block.timestamp < _tgeTimestamp) revert StoneFormPresale__TGENotReached();
 
         presaleStatus = Status.FINALIZED;
@@ -353,9 +355,8 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
             uint256 tgeAmount = (amount * tier.tgeUnlockPercent) / 100;
             uint256 linearAmount = amount - tgeAmount;
 
-            uint256 vestedLinear = tier.vestingDuration == 0
-                ? linearAmount
-                : (linearAmount * elapsed) / tier.vestingDuration;
+            uint256 vestedLinear =
+                tier.vestingDuration == 0 ? linearAmount : (linearAmount * elapsed) / tier.vestingDuration;
 
             uint128 startAmount = uint128(tgeAmount + vestedLinear);
             uint40 remainingDuration = tier.vestingDuration - elapsed;
@@ -370,10 +371,7 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
                     transferable: true,
                     broker: address(0),
                     startAmount: startAmount,
-                    durations: ISablierLockupLinear.Durations({
-                        cliff: 0,
-                        total: remainingDuration
-                    })
+                    durations: ISablierLockupLinear.Durations({cliff: 0, total: remainingDuration})
                 })
             );
         }
@@ -383,15 +381,8 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
 
     /* ───────────── INTERNAL ───────────── */
 
-    function _verifySig(
-        address caller,
-        uint256 amount,
-        string memory paymentToken,
-        Sign calldata sig
-    ) internal view {
-        bytes32 hash = keccak256(
-            abi.encodePacked(caller, amount, paymentToken, sig.nonce)
-        );
+    function _verifySig(address caller, uint256 amount, string memory paymentToken, Sign calldata sig) internal view {
+        bytes32 hash = keccak256(abi.encodePacked(caller, amount, paymentToken, sig.nonce));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(hash);
         address recovered = ethSignedHash.recover(sig.v, sig.r, sig.s);
 
@@ -400,11 +391,7 @@ contract StoneFormPresaleAdvanced is AccessControl, ReentrancyGuard, Pausable {
 
     /* ───────────── EMERGENCY ───────────── */
 
-    function emergencyWithdraw(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyRole(ADMIN_ROLE) {
+    function emergencyWithdraw(address token, address to, uint256 amount) external onlyRole(ADMIN_ROLE) {
         if (to == address(0)) revert StoneFormPresale__ZeroAddress();
         if (token == address(0)) {
             (bool success,) = payable(to).call{value: amount}("");

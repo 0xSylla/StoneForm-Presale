@@ -15,12 +15,9 @@ contract SetPresaleToken is Script {
 }
 
 contract AddPaymentTokens is Script {
-    function addPaymentTokens(
-        address presale,
-        address[] memory tokens,
-        string[] memory symbols,
-        uint256 deployerKey
-    ) public {
+    function addPaymentTokens(address presale, address[] memory tokens, string[] memory symbols, uint256 deployerKey)
+        public
+    {
         vm.startBroadcast(deployerKey);
         StoneFormPresaleAdvanced(payable(presale)).addNewPaymentToken(tokens, symbols);
         vm.stopBroadcast();
