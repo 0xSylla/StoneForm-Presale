@@ -1,0 +1,18 @@
+[profile.default]
+src = "src"
+out = "out"
+script = "script"
+libs = ["lib"]
+remappings = ["@openzeppelin/contracts=lib/openzeppelin-contracts/contracts"]
+
+fs_permissions = [
+    { access = "read", path = "./broadcast" },
+    { access = "read", path = "./reports" },
+]
+
+[rpc_endpoints]
+bsc_mainnet = "${BSC_RPC_URL}"
+localhost = "http://127.0.0.1:8545"
+
+[etherscan]
+bsc = { key = "${BSCSCAN_API_KEY}", url = "https://api.bscscan.com/api", chain = 56 }
